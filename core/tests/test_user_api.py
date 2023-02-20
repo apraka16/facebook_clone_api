@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 CREATE_USER_URL = reverse('create-user')
 USER_LIST_URL = reverse('user-list')
+TOKEN_URL = reverse('auth-token')
 
 
 def create_user(**params):
@@ -34,8 +35,7 @@ class PublicUserAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = get_user_model().objects.get(username=payload['username'])
-        self.assertEqual(user.password, payload['password'])
-        # self.assertTrue(user.check_password(payload['password']))
+        self.assertTrue(user.check_password(payload['password']))
         self.assertNotIn('password', response.data)
 
     def test_user_exists_error(self):
@@ -66,6 +66,24 @@ class PublicUserAPITests(TestCase):
         response = self.client.get(USER_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_create_token_for_user(self):
+        """Test generate token for valid credentials"""
+
+        user_details = {
+            'username': 'testuser2',
+            'password': 'testpass123',
+        }
+        create_user(**user_details)
+
+        payload = {
+            'username': user_details['username'],
+            'password': user_details['password'],
+        }
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.assertIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
 
 class PrivateUserAPITests(TestCase):
     """Test private features of User API"""
@@ -78,11 +96,11 @@ class PrivateUserAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_list_user_success(self):
+    def test_list_users_success(self):
         """Test fetching list of all users as authorized"""
 
-        create_user(username='testuser2', password='testpass123') #2
-        create_user(username='testuser3', password='testpass123') #3
+        create_user(username='testuser2', password='testpass123')  #2
+        create_user(username='testuser3', password='testpass123')  #3
 
         response = self.client.get(USER_LIST_URL)
 
