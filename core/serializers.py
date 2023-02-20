@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Post
+from .models import Post, UserProfile
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -27,6 +27,27 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for User Profile model"""
+    class Meta:
+        model = UserProfile
+        fields = ['dob', 'country', 'aboutme', 'user']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        """Create the uesr's profile"""
+        profile = UserProfile.objects.create(
+            **validated_data,
+            user=self.context['request'].user
+        )
+        return profile
+
+    def update(self, instance, validated_data):
+        """Update and return profile"""
+        profile = super().update(instance, validated_data)
+        return profile
 
 
 class PostSerializer(serializers.ModelSerializer):

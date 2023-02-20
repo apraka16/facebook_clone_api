@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
+from .models import UserProfile
 
 from .serializers import (
     PostSerializer,
     UserSerializer,
+    UserProfileSerializer,
     AuthTokenSerializer,
 )
 
@@ -26,6 +28,22 @@ class ListUserAPIView(generics.ListAPIView):
 class CreateUserAPIView(generics.CreateAPIView):
     """Anyone can create a user"""
     serializer_class = UserSerializer
+
+
+class ListProfileAPIView(generics.ListAPIView):
+    """Authed users can see list of all profiles"""
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+
+class CreateProfileAPIView(generics.CreateAPIView):
+    """Authed users can create their profile"""
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
 
 class CreateTokenView(ObtainAuthToken):
