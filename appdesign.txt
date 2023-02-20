@@ -1,0 +1,34 @@
+Facebook Model:
+
+- User Auth
+    - Email
+    - Password
+
+- User Profile
+    - Name
+    - Email
+    - Password
+    - About Me
+
+2. Post
+    - Title
+    - Description
+    - Image (Optional)
+    - Poster: User
+    - [Comments]
+
+3. Comment
+    - Commentary
+    - Commenter: User
+    - Attached to: Post
+
+Facebook Capabilities
+- A user should be able to register and create his profile; she can change "About me" but not anything else
+- A user can see, but cannot edit/ delete:
+    - List of all users
+    - Profile (Email, About Me) of any specific user
+    - Posts of a specific user
+- A user can see, edit and delete:
+    - Her Name, About me (in Profile)
+    - Her own posts (Title, Description, Image)
+- A user can create a post
