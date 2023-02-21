@@ -58,8 +58,6 @@ class PrivateUserProfileAPITests(TestCase):
 
     def test_create_profile_from_auth_user(self):
         """Test profile can only be created for authed user"""
-        # Create another profile (which is not authed)
-
         payload = {
             'dob': date(1987, 1, 1),
             'country': 'South Africa',
@@ -67,6 +65,8 @@ class PrivateUserProfileAPITests(TestCase):
         }
 
         response = self.client.post(CREATE_PROFILE_URL, payload)
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['user'], get_user_model().objects.get(id=self.user.id).id)
+
+        assoc_profile = UserProfile.objects.get(user=self.user)
+        for key in payload:
+            self.assertEqual(getattr(assoc_profile, key), payload[key])

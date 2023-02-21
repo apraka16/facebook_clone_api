@@ -5,14 +5,14 @@ from django.contrib.auth.models import User
 
 class Post(models.Model):
     """Post model"""
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    image = models.ImageField(upload_to='images', blank=True)
     poster = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        editable=False,
+        related_name='posts',
     )
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    image = models.ImageField(upload_to='images', blank=True)
 
     def __str__(self):
         return self.title
@@ -23,7 +23,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        editable=False
+        related_name='profile',
     )
     dob = models.DateField(blank=True)
     country = models.CharField(max_length=255, default='India')

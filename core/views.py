@@ -46,6 +46,14 @@ class CreateProfileAPIView(generics.CreateAPIView):
     authentication_classes = [TokenAuthentication]
 
 
+class RetrieveUpdateDestroyProfileAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """Authed users can retrieve/ update/ destoy their profile"""
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+
 class CreateTokenView(ObtainAuthToken):
     """Create a new auth token for user"""
     serializer_class = AuthTokenSerializer
