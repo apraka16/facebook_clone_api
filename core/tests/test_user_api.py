@@ -28,7 +28,8 @@ class PublicUserAPITests(TestCase):
         self.client = APIClient()
 
     def test_create_user_success(self):
-        """Test whether user is created successfully on giving username and password"""
+        """Test whether user is created successfully on giving username
+        and password"""
         payload = {
             'username': 'testuser',
             'password': 'testpass123',
@@ -58,7 +59,7 @@ class PublicUserAPITests(TestCase):
             },
             {
                 'username': 'testuser3',
-                'password':'testpass123'
+                'password': 'testpass123'
             },
         ]
 
@@ -121,7 +122,10 @@ class PublicUserAPITests(TestCase):
         self.client.post(CREATE_USER_URL, payload)
         patch_payload = {'username': 'testuser2'}
         user = get_user_model().objects.get(username='testuser1')
-        response = self.client.patch(get_user_detail_url(user.id), patch_payload)
+        response = self.client.patch(
+            get_user_detail_url(user.id),
+            patch_payload
+        )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -173,15 +177,15 @@ class PrivateUserAPITests(TestCase):
     def test_list_users_success(self):
         """Test fetching list of all users as authorized"""
 
-        create_user(username='testuser2', password='testpass123')  #2
-        create_user(username='testuser3', password='testpass123')  #3
+        create_user(username='testuser2', password='testpass123')  # 2
+        create_user(username='testuser3', password='testpass123')  # 3
 
         response = self.client.get(USER_LIST_URL)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(3, len(response.data))
 
-    def test_retrieve_user_success(self):
+    def test_retrieve_self_detail_success(self):
         """Test retrieving own user detail by authed user passes"""
 
         response = self.client.get(get_user_detail_url(self.user.id))
@@ -190,7 +194,31 @@ class PrivateUserAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(user.username, self.user.username)
 
-    def test_put_user_success(self):
+    def test_retrieve_other_user_detail_success(self):
+        """Test retrieving other user detail by authed user passes"""
+
+        create_user(
+            username='testuser2',
+            password='testpass123',
+            email='testuser2@example.com'
+        )  # 2
+
+        create_user(
+            username='testuser3',
+            password='testpass123',
+            email='testuser2@example.com'
+        )  # 3
+
+        user_2 = get_user_model().objects.get(username='testuser2')
+        user_3 = get_user_model().objects.get(username='testuser3')
+
+        for k in [user_2, user_3]:
+            response = self.client.get(get_user_detail_url(k.id))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(k.username, response.data['username'])
+            self.assertEqual(k.email, response.data['email'])
+
+    def test_put_self_user_success(self):
         """Test updating own user detail by authed user passes"""
 
         put_payload = {
@@ -201,7 +229,10 @@ class PrivateUserAPITests(TestCase):
             'email': 'testuser2@example.com',
         }
 
-        response = self.client.put(get_user_detail_url(self.user.id), put_payload)
+        response = self.client.put(
+            get_user_detail_url(self.user.id),
+            put_payload
+        )
 
         user = get_user_model().objects.get(id=self.user.id)
 
@@ -212,16 +243,52 @@ class PrivateUserAPITests(TestCase):
         self.assertEqual(user.email, put_payload['email'])
         self.assertTrue(user.check_password(put_payload['password']))
 
+    def test_put_other_use_detail_fail(self):
+        """Test updating other user detail by authed user fails"""
+
+        create_user(
+            username='test2user2',
+            password='testpass123',
+            first_name='test2',
+            last_name='user2',
+            email='test2user2@example.com'
+        )
+
+        original_user = get_user_model().objects.get(username='test2user2')
+
+        put_payload = {
+            'username': 'test3user3',
+            'password': 'testpass1234',
+            'first_name': 'test3',
+            'last_name': 'user3',
+            'email': 'testuser2@example.com',
+        }
+
+        response = self.client.put(
+            get_user_detail_url(original_user.id),
+            put_payload
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_patch_user_success(self):
         """Test updating own user detail by authed user passes"""
 
         patch_payload = {'username': 'testuser2'}
-        response = self.client.patch(get_user_detail_url(self.user.id), patch_payload)
+        response = self.client.patch(
+            get_user_detail_url(self.user.id),
+            patch_payload
+        )
         user = get_user_model().objects.get(id=self.user.id)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(user.username, patch_payload['username'])
         self.assertEqual(user.email, self.user.email)
+
+    def test_patch_other_user_fail(self):
+        """Test updating own user detail by authed user passes"""
+        # To update
+        pass
 
     def test_delete_user_success(self):
         """Test deleting self by authed user passes"""
@@ -229,4 +296,3 @@ class PrivateUserAPITests(TestCase):
         response = self.client.delete(get_user_detail_url(user.id))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
