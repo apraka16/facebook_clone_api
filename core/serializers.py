@@ -61,12 +61,3 @@ class PostSerializer(serializers.ModelSerializer):
         """Create a post"""
         post = Post.objects.create(**validated_data, poster=self.context['request'].user)
         return post
-
-
-class AuthTokenSerializer(serializers.Serializer):
-    """Serializer for the user auth token"""
-    username = serializers.CharField()
-    password = serializers.CharField(
-        style={'input_type': 'password'},
-        trim_whitespace=False,
-    )

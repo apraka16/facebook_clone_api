@@ -17,6 +17,10 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
+def get_user_detail_url(user_id):
+    return reverse('user-detail', args=[user_id])
+
+
 class PublicUserAPITests(TestCase):
     """Test public features of user API"""
 
@@ -66,6 +70,75 @@ class PublicUserAPITests(TestCase):
         response = self.client.get(USER_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_retrieve_user_failure(self):
+        """Test retrieving user by unauthed user fails"""
+        payload = {
+            'username': 'testuser1',
+            'password': 'testpass123',
+        }
+
+        self.client.post(CREATE_USER_URL, payload)
+        user = get_user_model().objects.get(username='testuser1')
+
+        response = self.client.get(get_user_detail_url(user.id))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_put_user_failure(self):
+        """Test updating user by unauthed user fails"""
+        payload = {
+            'username': 'testuser1',
+            'password': 'testpass123',
+            'first_name': 'test',
+            'last_name': 'user1',
+            'email': 'testuser1@example.com',
+        }
+
+        self.client.post(CREATE_USER_URL, payload)
+
+        put_payload = {
+            'username': 'testuser2',
+            'password': 'testpass1234',
+            'first_name': 'test',
+            'last_name': 'user2',
+            'email': 'testuser2@example.com',
+        }
+
+        user = get_user_model().objects.get(username='testuser1')
+        response = self.client.put(get_user_detail_url(user.id), put_payload)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_patch_user_failure(self):
+        """Test updating user by unauthed user fails"""
+        payload = {
+            'username': 'testuser1',
+            'password': 'testpass123',
+            'first_name': 'test',
+            'last_name': 'user1',
+            'email': 'testuser1@example.com',
+        }
+
+        self.client.post(CREATE_USER_URL, payload)
+        patch_payload = {'username': 'testuser2'}
+        user = get_user_model().objects.get(username='testuser1')
+        response = self.client.patch(get_user_detail_url(user.id), patch_payload)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_user_failure(self):
+        """Test deleting user by unauthed user fails"""
+        payload = {
+            'username': 'testuser1',
+            'password': 'testpass123',
+        }
+
+        self.client.post(CREATE_USER_URL, payload)
+        user = get_user_model().objects.get(username='testuser1')
+
+        response = self.client.delete(get_user_detail_url(user.id))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_create_token_for_user(self):
         """Test generate token for valid credentials"""
 
@@ -92,6 +165,7 @@ class PrivateUserAPITests(TestCase):
         self.user = create_user(
             username='testuser1',
             password='testpass123',
+            email='old_email@example.com',
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -106,3 +180,53 @@ class PrivateUserAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(3, len(response.data))
+
+    def test_retrieve_user_success(self):
+        """Test retrieving own user detail by authed user passes"""
+
+        response = self.client.get(get_user_detail_url(self.user.id))
+        user = get_user_model().objects.get(id=response.data['id'])
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user.username, self.user.username)
+
+    def test_put_user_success(self):
+        """Test updating own user detail by authed user passes"""
+
+        put_payload = {
+            'username': 'testuser2',
+            'password': 'testpass1234',
+            'first_name': 'test',
+            'last_name': 'user2',
+            'email': 'testuser2@example.com',
+        }
+
+        response = self.client.put(get_user_detail_url(self.user.id), put_payload)
+
+        user = get_user_model().objects.get(id=self.user.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user.username, put_payload['username'])
+        self.assertEqual(user.first_name, put_payload['first_name'])
+        self.assertEqual(user.last_name, put_payload['last_name'])
+        self.assertEqual(user.email, put_payload['email'])
+        self.assertTrue(user.check_password(put_payload['password']))
+
+    def test_patch_user_success(self):
+        """Test updating own user detail by authed user passes"""
+
+        patch_payload = {'username': 'testuser2'}
+        response = self.client.patch(get_user_detail_url(self.user.id), patch_payload)
+        user = get_user_model().objects.get(id=self.user.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user.username, patch_payload['username'])
+        self.assertEqual(user.email, self.user.email)
+
+    def test_delete_user_success(self):
+        """Test deleting self by authed user passes"""
+        user = get_user_model().objects.get(username='testuser1')
+        response = self.client.delete(get_user_detail_url(user.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
