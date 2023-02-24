@@ -79,6 +79,29 @@ class PrivatePostAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(2, len(response.data))
 
+    def test_auth_required_to_create_post(self):
+        """
+            Only an authed user can create a new post
+            Owner of that post must be the authed user
+        """
+
+        new_user = create_user(
+            username='testuser2',
+            password='testpass123',
+        )
+
+        post_payload = {
+            'poster': new_user,
+            'title': 'New Post',
+            'description': 'New Description',
+        }
+
+        response = self.client.post(POSTS_URL, post_payload)
+        post = views.Post.objects.get(title=response.data['title'])
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(post.poster, self.user)
+
     def test_auth_required_to_view_specific_user_posts(self):
         """Test auth is required to view list of specific user's posts"""
         first_user = get_user_model().objects.get(username='testuser1')
@@ -111,25 +134,40 @@ class PrivatePostAPITests(TestCase):
         # Re-authenticate with first user
         self.client.force_authenticate(user=self.user)
 
-    def test_auth_required_to_create_post(self):
+    def test_list_posts_user_does_not_exist_fails_gracefully(self):
         """
-            Only an authed user can create a new post
-            Owner of that post must be the authed user
+            Test posts_per_user fetches correct num posts if user found
+            Test posts_per_user fetches all posts if user not found
         """
+        first_user = get_user_model().objects.get(username='testuser1')
 
-        new_user = create_user(
+        create_post(poster=self.user, title="Post 1", description="This is Post 1")
+        create_post(poster=self.user, title="Post 2", description="This is Post 2")
+        create_post(poster=self.user, title="Post 3", description="This is Post 3")
+
+        # Logout with first user
+        self.client.logout()
+
+        other_user = create_user(
             username='testuser2',
             password='testpass123',
         )
+        # Auth with 2nd user
+        self.client.force_authenticate(user=other_user)
 
-        post_payload = {
-            'poster': new_user,
-            'title': 'New Post',
-            'description': 'New Description',
-        }
+        create_post(poster=other_user, title="Post 4", description="This is Post 4")
+        create_post(poster=other_user, title="Post 5", description="This is Post 5")
 
-        response = self.client.post(POSTS_URL, post_payload)
-        post = views.Post.objects.get(title=response.data['title'])
+        response = self.client.get(get_users_posts_list_url(first_user.id))
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(post.poster, self.user)
+        self.assertEqual(3, len(response.data))
+
+        response_2 = self.client.get(get_users_posts_list_url(10))
+
+        self.assertEqual(5, len(response_2.data))
+
+        # Logout with 2nd user
+        self.client.logout()
+
+        # Re-authenticate with first user
+        self.client.force_authenticate(user=self.user)
