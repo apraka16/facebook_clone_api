@@ -1,9 +1,15 @@
 from django.contrib.auth.models import User
-from .models import UserProfile
 from django.contrib.auth import get_user_model
-from .permissions import UserPermission
-from rest_framework.response import Response
 
+from .models import (
+    UserProfile,
+    Post
+)
+
+from .permissions import (
+    UserPermission,
+    PostPermission,
+)
 
 from .serializers import (
     PostSerializer,
@@ -11,11 +17,10 @@ from .serializers import (
     UserProfileSerializer,
 )
 
-from .models import Post
-
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.response import Response
 
 # Users
 
@@ -74,6 +79,32 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
+
+
+class PostRetrieveAPIView(generics.RetrieveAPIView):
+    """Authed users can retrieve any post"""
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+
+class PostUpdateAPIView(generics.UpdateAPIView):
+    """Authed users can update only own posts"""
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [PostPermission]
+    authentication_classes = [TokenAuthentication]
+
+
+class PostDeleteAPIView(generics.DestroyAPIView):
+    """Authed users can delete only own posts"""
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [PostPermission]
+    authentication_classes = [TokenAuthentication]
+
+# User Posts
 
 
 class UserPostListAPIView(generics.ListAPIView):

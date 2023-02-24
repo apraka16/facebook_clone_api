@@ -14,7 +14,7 @@ class Post(models.Model):
     image = models.ImageField(upload_to='images', blank=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} - by {self.poster.username}"
 
 
 class UserProfile(models.Model):
@@ -29,4 +29,4 @@ class UserProfile(models.Model):
     aboutme = models.TextField()
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username} - from {self.country}"

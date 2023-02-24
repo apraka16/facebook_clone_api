@@ -1,4 +1,4 @@
-Facebook Model:
+DESIGN:
 
 - User Auth
     - Email
@@ -32,3 +32,7 @@ Facebook Capabilities
     - Her Name, About me (in Profile)
     - Her own posts (Title, Description, Image)
 - A user can create a post
+
+
+OPEN QUESTIONS:
+1. Why do we need a poster to create post when done on model directly; but not needed when done through URL?
