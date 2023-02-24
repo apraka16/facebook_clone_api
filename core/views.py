@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from .models import UserProfile
+from django.contrib.auth import get_user_model
 from .permissions import UserPermission
+from rest_framework.response import Response
+
 
 from .serializers import (
     PostSerializer,
@@ -71,3 +74,19 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
+
+
+class UserPostListAPIView(generics.ListAPIView):
+    """Authed users can see posts posted by specific user"""
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+    def list(self, request, *args, **kwargs):
+        filtered_user_id = kwargs['poster_id']
+        if filtered_user_id is not None:
+            filtered_user = get_user_model().objects.get(id=filtered_user_id)
+            queryset = Post.objects.filter(poster=filtered_user)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

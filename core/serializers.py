@@ -54,7 +54,8 @@ class PostSerializer(serializers.ModelSerializer):
     """Serializer for Posts model"""
     class Meta:
         model = Post
-        fields = ['title', 'description']
+        fields = ['poster', 'title', 'description']
+        depth = 1
         read_only_fields = ['id']
 
     def create(self, validated_data):

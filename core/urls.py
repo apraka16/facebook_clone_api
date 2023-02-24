@@ -8,11 +8,13 @@ from .views import (
     ProfileCreateAPIView,
     ProfileRetrieveUpdateDestroyAPIView,
     UserRetrieveUpdateDestroyAPIView,
+    UserPostListAPIView,
 )
 from rest_framework.authtoken import views
 
 urlpatterns = [
     path('posts/', PostListCreateAPIView.as_view(), name='posts'),
+    path('posts/poster/<int:poster_id>', UserPostListAPIView.as_view(), name='user-posts'),
 
     path('profiles/', ProfileListAPIView.as_view(), name='profiles'),
     path('profiles/create/', ProfileCreateAPIView.as_view(), name='create-profile'),
