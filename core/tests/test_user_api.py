@@ -14,16 +14,18 @@ TOKEN_URL = reverse('auth-token')
 
 
 def create_user(**params):
+    """Helper method to create user"""
     return get_user_model().objects.create_user(**params)
 
 
 def get_user_detail_url(user_id):
+    """Helper method to retrieve user detail"""
     return reverse('user-detail', args=[user_id])
 
 
 class PublicUserAPITests(TestCase):
     """Test public features of user API"""
-
+    # Set up the client (dummy browser) to call HTTP methods on
     def setUp(self):
         self.client = APIClient()
 

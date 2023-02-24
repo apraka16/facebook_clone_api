@@ -21,7 +21,6 @@ class UserListAPIView(generics.ListAPIView):
     """Authed users can see list of all users"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [UserPermission]
     authentication_classes = [TokenAuthentication]
 
@@ -34,7 +33,6 @@ class UserCreateAPIView(generics.CreateAPIView):
 class UserRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [UserPermission]
     authentication_classes = [TokenAuthentication]
 
@@ -68,6 +66,7 @@ class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 
 class PostListCreateAPIView(generics.ListCreateAPIView):
+    """Authed user can create post"""
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]

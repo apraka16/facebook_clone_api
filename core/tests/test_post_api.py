@@ -18,7 +18,12 @@ def create_post(**params):
     return views.Post.objects.create(**params)
 
 
-POSTS_URL = reverse('post-list')
+def get_post_detail_url(post_id):
+    """Helper method to return URL for post details"""
+    return reverse('posts', args=[post_id])
+
+
+POSTS_URL = reverse('posts')
 
 
 class PublicPostAPITests(TestCase):
@@ -45,7 +50,7 @@ class PrivatePostAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_auth_required_to_view_posts(self):
+    def test_auth_required_to_view_all_posts(self):
         """Test that auth is required to call the List API"""
 
         other_user = create_user(
@@ -69,3 +74,26 @@ class PrivatePostAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(2, len(response.data))
+
+    def test_auth_required_to_create_post(self):
+        """
+            Only an authed user can create a new post
+            Owner of that post must be the authed user
+        """
+
+        new_user = create_user(
+            username='testuser2',
+            password='testpass123',
+        )
+
+        post_payload = {
+            'poster': new_user,
+            'title': 'New Post',
+            'description': 'New Description',
+        }
+
+        response = self.client.post(POSTS_URL, post_payload)
+        post = views.Post.objects.get(title=response.data['title'])
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(post.poster, self.user)

@@ -12,7 +12,7 @@ from .views import (
 from rest_framework.authtoken import views
 
 urlpatterns = [
-    path('posts/', PostListCreateAPIView.as_view(), name='post-list'),
+    path('posts/', PostListCreateAPIView.as_view(), name='posts'),
 
     path('profiles/', ProfileListAPIView.as_view(), name='profiles'),
     path('profiles/create/', ProfileCreateAPIView.as_view(), name='create-profile'),
