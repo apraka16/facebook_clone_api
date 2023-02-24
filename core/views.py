@@ -3,6 +3,7 @@ from .models import UserProfile
 from django.contrib.auth import get_user_model
 from .permissions import UserPermission
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 
 from .serializers import (
@@ -77,16 +78,22 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 
 
 class UserPostListAPIView(generics.ListAPIView):
-    """Authed users can see posts posted by specific user"""
+    """
+    Authed users can see posts posted by specific user
+    If user not found, show all posts
+    """
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def list(self, request, *args, **kwargs):
+        queryset = Post.objects.all()
         filtered_user_id = kwargs['poster_id']
-        if filtered_user_id is not None:
+        if get_user_model().objects.filter(id=filtered_user_id).exists():
             filtered_user = get_user_model().objects.get(id=filtered_user_id)
             queryset = Post.objects.filter(poster=filtered_user)
+        else:
+            print('User not found; showing list of all posts')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
